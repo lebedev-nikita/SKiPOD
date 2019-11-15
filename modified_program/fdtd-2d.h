@@ -13,11 +13,6 @@
 #define LARGE_DATASET
 # endif
 # if !defined(TMAX) && !defined(NX) && !defined(NY)
-# ifdef MINI_DATASET
-#define TMAX 20
-#define NX 20
-#define NY 30
-# endif
 # ifdef SMALL_DATASET
 #define TMAX 40
 #define NX 60
