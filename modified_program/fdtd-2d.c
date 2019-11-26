@@ -56,36 +56,36 @@ void print_array(int nx,
                 )
 {
     int i, j;
-    fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
+    printf("==BEGIN DUMP_ARRAYS==\n");
 
-    fprintf(stderr, "begin dump: %s\n", "ex");
+    printf("begin dump: %s\n", "ex");
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
-            fprintf(stderr, "%5.2f ", ex[i][j]);
+            printf("%5.2f ", ex[i][j]);
         }
-        fprintf(stderr, "\n");
+        printf("\n");
     }
-    fprintf(stderr, "end   dump: %s\n", "ex");
+    printf("end   dump: %s\n", "ex");
 
-    fprintf(stderr, "begin dump: %s\n", "ey");
+    printf("begin dump: %s\n", "ey");
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
-            fprintf(stderr, "%5.2f ", ey[i][j]);
+            printf("%5.2f ", ey[i][j]);
         }
-        fprintf(stderr, "\n");
+        printf("\n");
     }
-    fprintf(stderr, "end   dump: %s\n", "ey");
+    printf("end   dump: %s\n", "ey");
 
-    fprintf(stderr, "begin dump: %s\n", "hz");
+    printf("begin dump: %s\n", "hz");
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
-            fprintf(stderr, "%5.2f ", hz[i][j]);
+            printf("%5.2f ", hz[i][j]);
         }
-        fprintf(stderr, "\n");
+        printf("\n");
     }
-    fprintf(stderr, "end   dump: %s\n", "hz");
+    printf("end   dump: %s\n", "hz");
     
-    fprintf(stderr, "==END   DUMP_ARRAYS==\n");
+    printf("==END   DUMP_ARRAYS==\n");
 }
 
 // основные вычисления

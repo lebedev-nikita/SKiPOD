@@ -43,6 +43,5 @@
 #include <sys/time.h>
 // #include <mpi.h>
 #include <omp.h>
-#define stderr stdout
 # endif
 
