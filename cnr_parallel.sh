@@ -1,1 +1,1 @@
-gcc -fopenmp -o Parallel 'modified_program/fdtd-2d.c' && ./Parallel > out_par.txt
+gcc -fopenmp -o Parallel 'src/fdtd-2d-parallel.c' && ./Parallel > out_par.txt

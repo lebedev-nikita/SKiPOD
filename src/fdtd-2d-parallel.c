@@ -143,10 +143,6 @@ int main(int argc, char** argv)
     bench_timer_print();
     print_array(nx, ny, *ex, *ey, *hz);
 
-    if (argc > 42 && ! strcmp(argv[0], "")) {
-        print_array(nx, ny, *ex, *ey, *hz);
-    }
-
     free( (void*)ex     );
     free( (void*)ey     );
     free( (void*)hz     );
