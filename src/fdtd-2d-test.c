@@ -100,9 +100,8 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
         #pragma omp parallel private(i,j) shared(t, ex, ey, hz, tmax, _fict_, nx, ny)
         {
             #pragma omp for 
-            for (j = 0; j < ny; j++) {
+            for (j = 0; j < ny; j++)
                 ey[0][j] = _fict_[t];
-            }
 
             #pragma omp for
             for (i = 1; i < nx; i++)
@@ -119,17 +118,7 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
             //     for (j = 0; j < ny - 1; j++)
             //         hz[i][j] = hz[i][j] - 0.7f*(ex[i][j+1] - ex[i][j] + ey[i+1][j] - ey[i][j]);
 
-            #pragma omp for nowait
-            for (i = 0; i < nx - 1; i++)
-                for (j = 0; j < ny - 1; j++)
-                    hz[i][j] = hz[i][j] + 0.7f*ey[i][j];
-
-            #pragma omp for nowait
-            for (i = 0; i < nx - 1; i++)
-                for (j = 0; j < ny - 1; j++)
-                    hz[i][j] = hz[i][j] - 0.7f*(ey[i+1][j]);
-
-            #pragma omp for 
+            #pragma omp for
             for (i = 0; i < nx - 1; i++)
                 for (j = 0; j < ny - 1; j++)
                     hz[i][j] = hz[i][j] - 0.7f*ex[i][j+1];
@@ -138,6 +127,17 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
             for (i = 0; i < nx - 1; i++)
                 for (j = 0; j < ny - 1; j++)
                     hz[i][j] = hz[i][j] + 0.7f*ex[i][j];
+
+            #pragma omp for
+            for (i = 0; i < nx - 1; i++)
+                for (j = 0; j < ny - 1; j++)
+                    hz[i][j] = hz[i][j] - 0.7f*ey[i+1][j];
+
+            #pragma omp for
+            for (i = 0; i < nx - 1; i++)
+                for (j = 0; j < ny - 1; j++)
+                    hz[i][j] = hz[i][j] + 0.7f*ey[i][j];
+
         }
     }
 }

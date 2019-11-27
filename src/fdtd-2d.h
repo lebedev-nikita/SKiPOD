@@ -1,10 +1,10 @@
-// #define TMAX 50
-// #define NX 12
-// #define NY 12
+#define TMAX 50
+#define NX 12
+#define NY 12
 
 // #define SMALL_DATASET
 // #define MEDIUM_DATASET
-#define LARGE_DATASET
+// #define LARGE_DATASET
 // #define EXTRALARGE_DATASET
 
 #ifndef _FDTD_2D_H

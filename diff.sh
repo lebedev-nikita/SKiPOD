@@ -1,1 +1,1 @@
-diff out_seq.txt out_par.txt
+diff out_seq.txt out_par.txt > out
