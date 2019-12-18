@@ -1,0 +1,2 @@
+ssh -i ~/.ssh/edu-cmc-skpod19-328-09 edu-cmc-skpod19-328-09@bluegene.cs.msu.ru
+

@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-// #include <mpi.h>
+#include <mpi.h>
 #include <omp.h>
 # endif
 
