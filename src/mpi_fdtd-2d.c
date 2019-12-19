@@ -47,6 +47,13 @@ void init_array (int tmax, int nx, int ny,
             ey[i][j]   = ( (float) (startrow + i - 1) * (j + 2) ) / ny;
             hz[i][j]   = ( (float) (startrow + i - 1) * (j + 3) ) / nx;
         }
+    for (j = 0; j < ny; j++) // инициализируем теневые грани
+    {
+        ey[0][j]         = ( (float) (startrow + 0 - 1) * (j + 2) ) / ny;
+        hz[0][j]         = ( (float) (startrow + 0 - 1) * (j + 3) ) / nx;
+        ey[nrows+1][j]   = ( (float) (startrow + nrows+1 - 1) * (j + 2) ) / ny;
+        hz[nrows+1][j]   = ( (float) (startrow + nrows+1 - 1) * (j + 3) ) / nx;
+    }
 }
 
 static
@@ -102,21 +109,24 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
         if (rank == 0)                                              ////
             for (j = 0; j < ny; j++)
                 ey[1][j] = _fict_[t];
+        else
+            for (j = 0; j < ny; j++)
+                ey[1][j] = ey[i][j] - 0.5f*(hz[1][j]-hz[0][j]); ////
 
         for (i = 2; i <= nrows; i++) {
             for (j = 0; j < ny; j++)    
-                ey[i][j] = ey[i][j] - 0.5f*(hz[i-1][j]-hz[i-2][j]); ////
+                ey[i][j] = ey[i][j] - 0.5f*(hz[i][j]-hz[i-1][j]); ////
         }
-
-        for (i = 1; i <= nrows; i++) {                              ////
+        for (i = 0; i < nrows; i++) {                              ////
             for (j = 1; j < ny; j++)
-                ex[i][j] = ex[i][j] - 0.5f*(hz[i-1][j]-hz[i-1][j-1]);
+                ex[i][j] = ex[i][j] - 0.5f*(hz[i+1][j]-hz[i+1][j-1]);
         }
 
-        for (i = 0; i < nrows - 1; i++) {                           ////
+        for (i = 1; i <= nrows - 1; i++) {                           ////
             for (j = 0; j < ny - 1; j++)
-                hz[i][j] = hz[i][j] - 0.7f*(ex[i+1][j+1] - ex[i+1][j] + ey[i+2][j] - ey[i+1][j]);
+                hz[i][j] = hz[i][j] - 0.7f*(ex[i-1][j+1] - ex[i-1][j] + ey[i+1][j] - ey[i][j]);
         }
+        // V
     }
 }
 
