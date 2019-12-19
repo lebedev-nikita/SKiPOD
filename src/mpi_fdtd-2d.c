@@ -103,7 +103,12 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
                      float ex[nrows][ny], float ey[nrows+2][ny], float hz[nrows+2][ny], float _fict_[tmax]
                     )
 {
+    MPI_Request req[8];
+    MPI_Status status[8];
     int t, i, j;
+    int nExchanges, n;
+    int II, shift;
+
     for(t = 0; t < tmax; t++)
     {
         if (rank == 0)                                              ////
@@ -127,6 +132,33 @@ void kernel_fdtd_2d (int tmax, int nx, int ny,
                 hz[i][j] = hz[i][j] - 0.7f*(ex[i-1][j+1] - ex[i-1][j] + ey[i+1][j] - ey[i][j]);
         }
         // V
+        // обмен для ey
+        if (myrank != 0) {
+            MPI_Irecv(&ey[0][0],       ny, MPI_FLOAT, myrank - 1, 'e'+'y'+1, MPI_COMM_WORLD, &req[0]);
+            MPI_Irecv(&hz[0][0],       ny, MPI_FLOAT, myrank - 1, 'h'+'z'+1, MPI_COMM_WORLD, &req[1]);
+        }
+
+        if (myrank != 0) {
+            MPI_Isend(&ey[1][0],       ny, MPI_FLOAT, myrank + 1, 'e'+'y'+2, MPI_COMM_WORLD, &req[2]);
+            MPI_Isend(&hz[1][0],       ny, MPI_FLOAT, myrank + 1, 'h'+'z'+2, MPI_COMM_WORLD, &req[3]);
+        }
+
+        if (myrank != numtasks - 1) {
+            MPI_Isend(&ey[nrows][0],   ny, MPI_FLOAT, myrank + 1, 'e'+'y'+1, MPI_COMM_WORLD, &req[4]);
+            MPI_Isend(&hz[nrows][0],   ny, MPI_FLOAT, myrank + 1, 'h'+'z'+1, MPI_COMM_WORLD, &req[5]);
+        }
+
+        if (myrank != numtasks - 1) {
+            MPI_Irecv(&ey[nrows+1][0], ny, MPI_FLOAT, myrank + 1, 'e'+'y'+2, MPI_COMM_WORLD, &req[6]);
+            MPI_Irecv(&hz[nrows+1][0], ny, MPI_FLOAT, myrank + 1, 'h'+'z'+2, MPI_COMM_WORLD, &req[7]);
+        }
+        // ждем завершения обменов
+        II = 8;
+        shift = 0;
+        if (myrank = 0) {II = 4; shift = 4};
+        if (myrank == numtasks-1) {II = 4; shift = 0};
+        MPI_Waitall(II, &req[shift], &status[0]);
+
     }
 }
 
