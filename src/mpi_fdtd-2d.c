@@ -1,5 +1,7 @@
 #include "mpi_fdtd-2d.h"
 double bench_t_start, bench_t_end;
+int numtasks, rank;                             ////
+int startrow, lastrow, nrows;                   ////
 
 static
 double rtclock()
@@ -29,21 +31,21 @@ void bench_timer_print()
 
 static
 void init_array (int tmax, int nx, int ny,
-                 float ex[nx][ny],
-                 float ey[nx][ny],
-                 float hz[nx][ny],
+                 float ex[nrows][ny],
+                 float ey[nrows+2][ny],
+                 float hz[nrows+2][ny],
                  float _fict_[tmax]
-    )
+    )                                           ////
 {
     int i, j;
     for (i = 0; i < tmax; i++)
         _fict_[i] = (float) i;
-    for (i = 0; i < nx; i++)
+    for (i = 1; i <= nrows; i++)
         for (j = 0; j < ny; j++)
         {
-            ex[i][j] = ((float) i*(j+1)) / nx;
-            ey[i][j] = ((float) i*(j+2)) / ny;
-            hz[i][j] = ((float) i*(j+3)) / nx;
+            ex[i-1][j] = ( (float) (startrow + i - 1) * (j + 1) ) / nx;
+            ey[i][j]   = ( (float) (startrow + i - 1) * (j + 2) ) / ny;
+            hz[i][j]   = ( (float) (startrow + i - 1) * (j + 3) ) / nx;
         }
 }
 
@@ -91,31 +93,33 @@ void print_array(int nx,
 // основные вычисления
 static
 void kernel_fdtd_2d (int tmax, int nx, int ny,
-                     float ex[nx][ny], float ey[nx][ny], float hz[nx][ny], float _fict_[tmax]
+                     float ex[nrows][ny], float ey[nrows+2][ny], float hz[nrows+2][ny], float _fict_[tmax]
                     )
 {
     int t, i, j;
     for(t = 0; t < tmax; t++)
     {
-        for (j = 0; j < ny; j++)
-            ey[0][j] = _fict_[t];
+        if (rank == 0)                                              ////
+            for (j = 0; j < ny; j++)
+                ey[1][j] = _fict_[t];
 
-        for (i = 1; i < nx; i++)
+        for (i = 2; i <= nrows; i++) {
             for (j = 0; j < ny; j++)    
-                ey[i][j] = ey[i][j] - 0.5f*(hz[i][j]-hz[i-1][j]);
+                ey[i][j] = ey[i][j] - 0.5f*(hz[i-1][j]-hz[i-2][j]); ////
+        }
 
-        for (i = 0; i < nx; i++)
+        for (i = 1; i <= nrows; i++) {                              ////
             for (j = 1; j < ny; j++)
-                ex[i][j] = ex[i][j] - 0.5f*(hz[i][j]-hz[i][j-1]);
+                ex[i][j] = ex[i][j] - 0.5f*(hz[i-1][j]-hz[i-1][j-1]);
+        }
 
-        for (i = 0; i < nx - 1; i++)
+        for (i = 0; i < nrows - 1; i++) {                           ////
             for (j = 0; j < ny - 1; j++)
-                hz[i][j] = hz[i][j] - 0.7f*(ex[i][j+1] - ex[i][j] + ey[i+1][j] - ey[i][j]);
+                hz[i][j] = hz[i][j] - 0.7f*(ex[i+1][j+1] - ex[i+1][j] + ey[i+2][j] - ey[i+1][j]);
+        }
     }
 }
 
-int numtasks, rank;                             ////
-int startrow, lastrow, nrow;                    ////
 
 int main(int argc, char** argv)
 {
@@ -123,23 +127,26 @@ int main(int argc, char** argv)
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);   ////
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);       ////
     MPI_Barrier(MPI_COMM_WORLD);                ////
-    int leader_rank = numtasks / 2;             ////
+    int leader_rank = 0;             ////
 
     int tmax = TMAX;
     int nx = NX;
     int ny = NY;
 
+    startrow = (rank * nx) / numtasks;          ////
+    lastrow = ( (rank + 1)*nx / numtasks ) - 1; ////
+    nrows = lastrow - startrow + 1;              ////
+
     // #pragma omp parallel
     //     printf("%d\t %d\n", rank, omp_get_thread_num());
-    if (rank == leader_rank)                    ////
-    {
-        float (*ex)[nx][ny];       ex = ( float(*)[nx][ny] ) malloc (nx * ny * sizeof(float));
-        float (*ey)[nx][ny];       ey = ( float(*)[nx][ny] ) malloc (nx * ny * sizeof(float));
-        float (*hz)[nx][ny];       hz = ( float(*)[nx][ny] ) malloc (nx * ny * sizeof(float));
-        float (*_fict_)[tmax]; _fict_ = ( float(*)[tmax]   ) malloc (tmax * sizeof(float));
-        init_array (tmax, nx, ny, *ex, *ey, *hz, *_fict_);
+    float (*ex)[nrows][ny];     ex = ( float(*)[nrows+2][ny] ) malloc ( (nrows) * ny * sizeof(float));
+    float (*ey)[nrows+2][ny];   ey = ( float(*)[nrows+2][ny] ) malloc ( (nrows+2) * ny * sizeof(float));
+    float (*hz)[nrows+2][ny];   hz = ( float(*)[nrows][ny]   ) malloc ( (nrows+2) * ny * sizeof(float));
+    float (*_fict_)[tmax];   _fict_ = ( float(*)[tmax]       ) malloc (tmax * sizeof(float));
+    init_array (tmax, nx, ny, *ex, *ey, *hz, *_fict_);
+
+    if (rank == leader_rank)
         bench_timer_start();
-    }
 
     kernel_fdtd_2d (tmax, nx, ny, *ex, *ey, *hz, *_fict_); // вычисления
 
@@ -148,13 +155,13 @@ int main(int argc, char** argv)
     {
         bench_timer_stop();
         bench_timer_print();
-        print_array(nx, ny, *ex, *ey, *hz);
-
-        free( (void*)ex     );
-        free( (void*)ey     );
-        free( (void*)hz     );
-        free( (void*)_fict_ );
+        // print_array(nx, ny, *ex, *ey, *hz);
     }
+
+    free( (void*)ex     );
+    free( (void*)ey     );
+    free( (void*)hz     );
+    free( (void*)_fict_ );
 
     MPI_Finalize();                             ////
     return 0;
