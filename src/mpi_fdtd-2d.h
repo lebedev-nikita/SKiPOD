@@ -4,8 +4,8 @@
 
 // #define SMALL_DATASET
 // #define MEDIUM_DATASET
-#define LARGE_DATASET
-// #define EXTRALARGE_DATASET
+// #define LARGE_DATASET
+#define EXTRALARGE_DATASET
 
 #ifndef _FDTD_2D_H
 #define _FDTD_2D_H 
